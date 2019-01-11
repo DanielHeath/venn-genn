@@ -1,0 +1,16 @@
+[package]
+name = "venn-genn"
+version = "0.1.0"
+authors = ["Daniel Heath <daniel@heath.cc>"]
+edition = "2018"
+
+[dependencies]
+handlebars = "1.1.0"
+serde = "1.0"
+serde_json = "1.0"
+serde_derive = "1.0"
+docopt = "1.0.2"
+
+[lib]
+name = "modules"
+path = "src/lib.rs"
