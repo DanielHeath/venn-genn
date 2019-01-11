@@ -138,7 +138,12 @@ pub mod venn_genn {
                 return self.centre_one();
             }
 
-            // TODO: centre overlap-text in overlap-region
+            if self.only_two_circles() {
+                // TODO: punt away from centre by half overlap amount
+                return self.centre_one();
+            }
+
+            // TODO: centre circle text in non-overlap-region
             return self.centre_one();
         }
 
@@ -147,7 +152,12 @@ pub mod venn_genn {
                 return self.centre_two();
             }
 
-            // TODO: centre overlap-text in overlap-region
+            if self.only_two_circles() {
+                // TODO: punt away from centre by half overlap amount
+                return self.centre_two();
+            }
+
+            // TODO: centre circle text in non-overlap-region
             return self.centre_two();
         }
         fn centre_three_text(&self) -> Point {
@@ -155,11 +165,11 @@ pub mod venn_genn {
                 return self.centre_three();
             }
 
-            // TODO: centre overlap-text in overlap-region
+            // TODO: centre circle text in non-overlap-region
             return self.centre_three();
         }
         fn one_two_text(&self) -> Point {
-            if self.overlap <= 0.0 {
+            if self.overlap <= 0.0 || self.only_two_circles() {
                 return self.centre_one().midway_to(&self.centre_two());
             }
 
@@ -183,6 +193,10 @@ pub mod venn_genn {
             return self.centre_two().midway_to(&self.centre_three());
         }
 
+        fn only_two_circles(&self) -> bool {
+            self.third_title == ""
+        }
+
         fn circles(&self) -> Vec<Box<Circle>> {
             let first = Box::new(Circle {
                 centre: self.centre_one(),
@@ -200,7 +214,7 @@ pub mod venn_genn {
                 color: "#FFD20E".to_string(),
             });
 
-            if self.third_title != "" {
+            if !self.only_two_circles() {
                 return vec![first, second, third];
             }
             return vec![first, second];
@@ -224,7 +238,7 @@ pub mod venn_genn {
                     body: self.first_second_title.clone(),
                 }))
             }
-            if self.third_title != "" {
+            if !self.only_two_circles() {
                 texts.push(Box::new(Text {
                     centre: self.centre_text(),
                     body: self.central_title.clone(),
