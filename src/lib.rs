@@ -66,6 +66,12 @@ pub mod venn_genn {
                 y: (self.y + other.y) / 2.0,
             };
         }
+        fn frac_between(self, other: &Point, frac: f64) -> Point {
+            return Point {
+                x: (self.x + other.x * frac) / (frac+1.0),
+                y: (self.y + other.y * frac) / (frac+1.0),
+            };
+        }
         fn three_way_midpoint(self, other: &Point, third: &Point) -> Point {
             return Point {
                 x: (self.x + other.x + third.x) / 3.0,
@@ -236,25 +242,25 @@ pub mod venn_genn {
             if self.overlap <= 0.0 || self.only_two_circles() {
                 return self.centre_one().midway_to(&self.centre_two());
             }
-
-            // TODO: centre overlap-text in overlap-region
-            return self.centre_one().midway_to(&self.centre_two());
+            // 1/6 of the way between the intersect points
+            let (p1, p2) = self.centre_one().intersect_circle(self.centre_two(), self.radius, self.radius);
+            return p1.frac_between(&p2, 6.0);
         }
         fn one_three_text(&self) -> Point {
             if self.overlap <= 0.0 {
                 return self.centre_one().midway_to(&self.centre_three());
             }
-
-            // TODO: centre overlap-text in overlap-region
-            return self.centre_one().midway_to(&self.centre_three());
+            // 1/6 of the way between the intersect points
+            let (p1, p2) = self.centre_one().intersect_circle(self.centre_three(), self.radius, self.radius);
+            return p2.frac_between(&p1, 6.0);
         }
         fn two_three_text(&self) -> Point {
             if self.overlap <= 0.0 {
                 return self.centre_two().midway_to(&self.centre_three());
             }
-
-            // TODO: centre overlap-text in overlap-region
-            return self.centre_two().midway_to(&self.centre_three());
+            // 1/6 of the way between the intersect points
+            let (p1, p2) = self.centre_three().intersect_circle(self.centre_two(), self.radius, self.radius);
+            return p2.frac_between(&p1, 6.0);
         }
 
         fn only_two_circles(&self) -> bool {
