@@ -68,8 +68,8 @@ pub mod venn_genn {
         }
         fn frac_between(self, other: &Point, frac: f64) -> Point {
             return Point {
-                x: (self.x + other.x * frac) / (frac+1.0),
-                y: (self.y + other.y * frac) / (frac+1.0),
+                x: (self.x + other.x * frac) / (frac + 1.0),
+                y: (self.y + other.y * frac) / (frac + 1.0),
             };
         }
         fn three_way_midpoint(self, other: &Point, third: &Point) -> Point {
@@ -85,28 +85,31 @@ pub mod venn_genn {
             let centerdx = self.x - other.x;
             let centerdy = self.y - other.y;
             let dist = centerdx.hypot(centerdy);
-            if !((r1 - r2).abs() <= dist && dist <= r1 + r2) { // no intersection
+            if !((r1 - r2).abs() <= dist && dist <= r1 + r2) {
+                // no intersection
                 return (self, other);
             }
             // intersection(s) should exist
-            let dist_sq = dist*dist;
-            let a = (r1*r1 - r2*r2) / (2.0 * dist_sq);
-            let r2r2 = r1*r1 - r2*r2;
-            let c = (2.0 * (r1*r1 + r2*r2) / dist_sq - (r2r2 * r2r2) / (dist_sq*dist_sq) - 1.0).sqrt();
+            let dist_sq = dist * dist;
+            let a = (r1 * r1 - r2 * r2) / (2.0 * dist_sq);
+            let r2r2 = r1 * r1 - r2 * r2;
+            let c =
+                (2.0 * (r1 * r1 + r2 * r2) / dist_sq - (r2r2 * r2r2) / (dist_sq * dist_sq) - 1.0)
+                    .sqrt();
 
-            let fx = (self.x+other.x) / 2.0 + a * (other.x - self.x);
+            let fx = (self.x + other.x) / 2.0 + a * (other.x - self.x);
             let gx = c * (other.y - self.y) / 2.0;
             let ix1 = fx + gx;
             let ix2 = fx - gx;
 
-            let fy = (self.y+other.y) / 2.0 + a * (other.y - self.y);
+            let fy = (self.y + other.y) / 2.0 + a * (other.y - self.y);
             let gy = c * (self.x - other.x) / 2.0;
             let iy1 = fy + gy;
             let iy2 = fy - gy;
 
             // note if gy == 0 and gx == 0 then the circles are tangent and there is only one solution
             // but that one solution will just be duplicated as the code is currently written
-            return (Point {x: ix1, y: iy1}, Point {x: ix2, y: iy2});
+            return (Point { x: ix1, y: iy1 }, Point { x: ix2, y: iy2 });
         }
     }
 
@@ -128,6 +131,19 @@ pub mod venn_genn {
         pub first_second_title: String,
     }
 
+use std::io::Cursor;
+use rocket::request::Request;
+use rocket::response::{self, Response, Responder};
+
+impl<'r> Responder<'r> for VennDiagram {
+    fn respond_to(self, _: &Request) -> response::Result<'r> {
+        Response::build()
+            .sized_body(Cursor::new(self.to_svg().unwrap_or_else(|_| "".to_string())))
+            .raw_header("Content-Type", "image/svg+xml")
+            .raw_header("Content-Disposition", "inline;filename=venn-diagram.svg")
+            .ok()
+    }
+}
     impl VennDiagram {
         pub fn to_svg(self) -> Result<String, Box<Error>> {
             let mut reg = Handlebars::new();
@@ -150,11 +166,35 @@ pub mod venn_genn {
                 y: self.center,
             };
         }
+        fn circle_one_botleft(&self) -> Point {
+            let mut centre = self.centre_one();
+            centre.x -= self.radius * 30_f64.to_radians().cos();
+            centre.y += self.radius * 30_f64.to_radians().sin();
+            return centre;
+        }
+        fn circle_one_topright(&self) -> Point {
+            let mut centre = self.centre_one();
+            centre.x += self.radius * 30_f64.to_radians().cos();
+            centre.y -= self.radius * 30_f64.to_radians().sin();
+            return centre;
+        }
         fn centre_two(&self) -> Point {
             return Point {
                 x: self.center - self.overlap + self.radius,
                 y: self.center,
             };
+        }
+        fn circle_two_botright(&self) -> Point {
+            let mut centre = self.centre_two();
+            centre.x += self.radius * 30_f64.to_radians().cos();
+            centre.y += self.radius * 30_f64.to_radians().sin();
+            return centre;
+        }
+        fn circle_two_topleft(&self) -> Point {
+            let mut centre = self.centre_two();
+            centre.x -= self.radius * 30_f64.to_radians().cos();
+            centre.y -= self.radius * 30_f64.to_radians().sin();
+            return centre;
         }
         fn centre_three(&self) -> Point {
             let long_side = 2.0 * (self.radius - self.overlap);
@@ -162,6 +202,16 @@ pub mod venn_genn {
                 x: self.center,
                 y: self.center - (long_side.powi(2) - (long_side / 2.0).powi(2)).sqrt(),
             };
+        }
+        fn circle_three_top(&self) -> Point {
+            let mut centre = self.centre_three();
+            centre.y -= self.radius;
+            return centre;
+        }
+        fn circle_three_bot(&self) -> Point {
+            let mut centre = self.centre_three();
+            centre.y += self.radius;
+            return centre;
         }
         fn centre_text(&self) -> Point {
             return self
@@ -179,21 +229,12 @@ pub mod venn_genn {
                 return c2;
             }
 
-            let mut centre = self.centre_one();
-            let (p1, p2) = self.centre_two().intersect_circle(self.centre_three(), self.radius, self.radius);
+            let (p1, p2) =
+                self.centre_two()
+                    .intersect_circle(self.centre_three(), self.radius, self.radius);
             // use the one with the lowest x.
-            let nearpoint = if p1.x < p2.x { p1 } else {p2};
-            // find the distance to the midpoint
-            let dist_at_30deg: f64 = if (self.overlap / 2.0) > self.radius {
-                self.radius - self.centre_one().distance_to(nearpoint)
-            } else {
-                self.radius + self.centre_one().distance_to(nearpoint)
-            };
-
-            let angle = 30_f64;
-            centre.x -= dist_at_30deg * angle.to_radians().cos() / 2.0;
-            centre.y += dist_at_30deg * angle.to_radians().sin() / 2.0;
-            return centre;
+            let nearpoint = if p1.x < p2.x { p1 } else { p2 };
+            return self.circle_one_botleft().midway_to(&nearpoint);
         }
 
         fn centre_two_text(&self) -> Point {
@@ -207,21 +248,12 @@ pub mod venn_genn {
                 return c2;
             }
 
-            let mut centre = self.centre_two();
-            let (p1, p2) = self.centre_one().intersect_circle(self.centre_three(), self.radius, self.radius);
+            let (p1, p2) =
+                self.centre_one()
+                    .intersect_circle(self.centre_three(), self.radius, self.radius);
             // use the one with the highest x.
-            let nearpoint = if p1.x > p2.x { p1 } else {p2};
-            // find the distance to the midpoint
-            let dist_at_30deg: f64 = if (self.overlap / 2.0) > self.radius {
-                self.radius - self.centre_two().distance_to(nearpoint)
-            } else {
-                self.radius + self.centre_two().distance_to(nearpoint)
-            };
-
-            let angle = 30_f64;
-            centre.x += dist_at_30deg * angle.to_radians().cos() / 2.0;
-            centre.y += dist_at_30deg * angle.to_radians().sin() / 2.0;
-            return centre;
+            let nearpoint = if p1.x > p2.x { p1 } else { p2 };
+            return self.circle_two_botright().midway_to(&nearpoint);
         }
 
         fn centre_three_text(&self) -> Point {
@@ -229,38 +261,43 @@ pub mod venn_genn {
                 return self.centre_three();
             }
 
-            let mut centre = self.centre_three();
-            let (p1, p2) = self.centre_one().intersect_circle(self.centre_two(), self.radius, self.radius);
+            let (p1, p2) =
+                self.centre_one()
+                    .intersect_circle(self.centre_two(), self.radius, self.radius);
             // use the one with the highest y.
-            let nearpoint = if p1.y > p2.y { p1 } else {p2};
+            let nearpoint = if p1.y < p2.y { p1 } else { p2 };
             // find the distance to the midpoint
-            let dist_to_mid = self.centre_text().distance_to(nearpoint);
-            centre.y -= dist_to_mid / 2.0;
-            return centre;
+            return self.circle_three_top().midway_to(&nearpoint);
         }
         fn one_two_text(&self) -> Point {
             if self.overlap <= 0.0 || self.only_two_circles() {
                 return self.centre_one().midway_to(&self.centre_two());
             }
-            // 1/6 of the way between the intersect points
-            let (p1, p2) = self.centre_one().intersect_circle(self.centre_two(), self.radius, self.radius);
-            return p1.frac_between(&p2, 6.0);
+            let (p12a, p12b) =
+                self.centre_two()
+                    .intersect_circle(self.centre_one(), self.radius, self.radius);
+            let nearpoint = if p12a.y > p12b.y { p12a } else { p12b };
+            return self.circle_three_bot().midway_to(&nearpoint);
         }
         fn one_three_text(&self) -> Point {
             if self.overlap <= 0.0 {
                 return self.centre_one().midway_to(&self.centre_three());
             }
-            // 1/6 of the way between the intersect points
-            let (p1, p2) = self.centre_one().intersect_circle(self.centre_three(), self.radius, self.radius);
-            return p2.frac_between(&p1, 6.0);
+            let (p1, p2) =
+                self.centre_three()
+                    .intersect_circle(self.centre_one(), self.radius, self.radius);
+            let nearpoint = if p1.y < p2.y { p1 } else { p2 };
+            return self.circle_two_topleft().midway_to(&nearpoint);
         }
         fn two_three_text(&self) -> Point {
             if self.overlap <= 0.0 {
                 return self.centre_two().midway_to(&self.centre_three());
             }
-            // 1/6 of the way between the intersect points
-            let (p1, p2) = self.centre_three().intersect_circle(self.centre_two(), self.radius, self.radius);
-            return p2.frac_between(&p1, 6.0);
+            let (p1, p2) =
+                self.centre_three()
+                    .intersect_circle(self.centre_two(), self.radius, self.radius);
+            let nearpoint = if p1.y < p2.y { p1 } else { p2 };
+            return self.circle_one_topright().midway_to(&nearpoint);
         }
 
         fn only_two_circles(&self) -> bool {

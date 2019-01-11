@@ -9,8 +9,9 @@ handlebars = "1.1.0"
 serde = "1.0"
 serde_json = "1.0"
 serde_derive = "1.0"
-cfg-if = "0.1.2"
-wasm-bindgen = "0.2"
+# cfg-if = "0.1.2"
+# wasm-bindgen = "0.2"
+rocket = "0.4.0"
 
 [lib]
 name = "modules"
