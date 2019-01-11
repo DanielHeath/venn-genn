@@ -161,36 +161,49 @@ pub mod venn_genn {
         fn texts(&self) -> Vec<Box<Text>> {
             let mut texts = vec![
                 Box::new(Text {
+                    // TODO: if any overlap is present, centre text in non-overlap-region
                     centre: self.centre_one(),
                     body: self.first_title.clone(),
                 }),
                 Box::new(Text {
+                    // TODO: if any overlap is present, centre text in non-overlap-region
                     centre: self.centre_two(),
                     body: self.second_title.clone(),
                 }),
-                Box::new(Text {
-                    centre: self.centre_one().midway_to(&self.centre_two()),
-                    body: self.first_second_title.clone(),
-                }),
             ];
 
+            if self.overlap > 0.0 {
+                texts.push(
+                    // TODO: centre overlap-text in overlap-region
+                    Box::new(Text {
+                        centre: self.centre_one().midway_to(&self.centre_two()),
+                        body: self.first_second_title.clone(),
+                    })
+                )
+            }
             if self.third_title != "" {
                 texts.push(Box::new(Text {
                     centre: self.centre_text(),
                     body: self.central_title.clone(),
                 }));
                 texts.push(Box::new(Text {
+                    // TODO: if any overlap is present, centre text in non-overlap-region
                     centre: self.centre_three(),
                     body: self.third_title.clone(),
                 }));
-                texts.push(Box::new(Text {
-                    centre: self.centre_one().midway_to(&self.centre_three()),
-                    body: self.first_third_title.clone(),
-                }));
-                texts.push(Box::new(Text {
-                    centre: self.centre_two().midway_to(&self.centre_three()),
-                    body: self.second_third_title.clone(),
-                }));
+
+                if self.overlap > 0.0 {
+                    // TODO: centre overlap-text in overlap-region
+                    texts.push(Box::new(Text {
+                        centre: self.centre_one().midway_to(&self.centre_three()),
+                        body: self.first_third_title.clone(),
+                    }));
+                    // TODO: centre overlap-text in overlap-region
+                    texts.push(Box::new(Text {
+                        centre: self.centre_two().midway_to(&self.centre_three()),
+                        body: self.second_third_title.clone(),
+                    }));
+                }
             }
 
             return texts;

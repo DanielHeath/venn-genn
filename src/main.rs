@@ -17,7 +17,7 @@ fn main() -> Result<(), Box<Error>> {
             height: 800.0,
             width: 800.0,
             center: 400.0,
-            overlap: 50.0,
+            overlap: 70.0,
             radius: 160.0,
         }
         .to_svg()?
