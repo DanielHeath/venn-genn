@@ -197,22 +197,22 @@ pub mod venn_genn {
             self.third_title == ""
         }
 
-        fn circles(&self) -> Vec<Box<Circle>> {
-            let first = Box::new(Circle {
+        fn circles(&self) -> Vec<Circle> {
+            let first = Circle {
                 centre: self.centre_one(),
                 r: self.radius,
                 color: "#FF00D9".to_string(),
-            });
-            let second = Box::new(Circle {
+            };
+            let second = Circle {
                 centre: self.centre_two(),
                 r: self.radius,
                 color: "#14CCC0".to_string(),
-            });
-            let third = Box::new(Circle {
+            };
+            let third = Circle {
                 centre: self.centre_three(),
                 r: self.radius,
                 color: "#FFD20E".to_string(),
-            });
+            };
 
             if !self.only_two_circles() {
                 return vec![first, second, third];
@@ -220,43 +220,43 @@ pub mod venn_genn {
             return vec![first, second];
         }
 
-        fn texts(&self) -> Vec<Box<Text>> {
+        fn texts(&self) -> Vec<Text> {
             let mut texts = vec![
-                Box::new(Text {
+                Text {
                     centre: self.centre_one_text(),
                     body: self.first_title.clone(),
-                }),
-                Box::new(Text {
+                },
+                Text {
                     centre: self.centre_two_text(),
                     body: self.second_title.clone(),
-                }),
+                },
             ];
 
             if self.overlap > 0.0 {
-                texts.push(Box::new(Text {
+                texts.push(Text {
                     centre: self.one_two_text(),
                     body: self.first_second_title.clone(),
-                }))
+                })
             }
             if !self.only_two_circles() {
-                texts.push(Box::new(Text {
+                texts.push(Text {
                     centre: self.centre_text(),
                     body: self.central_title.clone(),
-                }));
-                texts.push(Box::new(Text {
+                });
+                texts.push(Text {
                     centre: self.centre_three_text(),
                     body: self.third_title.clone(),
-                }));
+                });
 
                 if self.overlap > 0.0 {
-                    texts.push(Box::new(Text {
+                    texts.push(Text {
                         centre: self.one_three_text(),
                         body: self.first_third_title.clone(),
-                    }));
-                    texts.push(Box::new(Text {
+                    });
+                    texts.push(Text {
                         centre: self.two_three_text(),
                         body: self.second_third_title.clone(),
-                    }));
+                    });
                 }
             }
 
