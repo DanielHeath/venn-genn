@@ -3,11 +3,10 @@ extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
 
-
 pub mod venn_genn {
+    use handlebars::Handlebars;
     use std::error::Error;
     use std::vec::Vec;
-    use handlebars::Handlebars;
 
     // const THIRD_DEGREE: f64 = 0.86602540378;
     const SVG_TEMPLATE: &'static str = r###"<?xml
@@ -134,6 +133,55 @@ pub mod venn_genn {
                 .centre_one()
                 .three_way_midpoint(&self.centre_two(), &self.centre_three());
         }
+        fn centre_one_text(&self) -> Point {
+            if self.overlap <= 0.0 {
+                return self.centre_one();
+            }
+
+            // TODO: centre overlap-text in overlap-region
+            return self.centre_one();
+        }
+
+        fn centre_two_text(&self) -> Point {
+            if self.overlap <= 0.0 {
+                return self.centre_two();
+            }
+
+            // TODO: centre overlap-text in overlap-region
+            return self.centre_two();
+        }
+        fn centre_three_text(&self) -> Point {
+            if self.overlap <= 0.0 {
+                return self.centre_three();
+            }
+
+            // TODO: centre overlap-text in overlap-region
+            return self.centre_three();
+        }
+        fn one_two_text(&self) -> Point {
+            if self.overlap <= 0.0 {
+                return self.centre_one().midway_to(&self.centre_two());
+            }
+
+            // TODO: centre overlap-text in overlap-region
+            return self.centre_one().midway_to(&self.centre_two());
+        }
+        fn one_three_text(&self) -> Point {
+            if self.overlap <= 0.0 {
+                return self.centre_one().midway_to(&self.centre_three());
+            }
+
+            // TODO: centre overlap-text in overlap-region
+            return self.centre_one().midway_to(&self.centre_three());
+        }
+        fn two_three_text(&self) -> Point {
+            if self.overlap <= 0.0 {
+                return self.centre_two().midway_to(&self.centre_three());
+            }
+
+            // TODO: centre overlap-text in overlap-region
+            return self.centre_two().midway_to(&self.centre_three());
+        }
 
         fn circles(&self) -> Vec<Box<Circle>> {
             let first = Box::new(Circle {
@@ -161,25 +209,20 @@ pub mod venn_genn {
         fn texts(&self) -> Vec<Box<Text>> {
             let mut texts = vec![
                 Box::new(Text {
-                    // TODO: if any overlap is present, centre text in non-overlap-region
-                    centre: self.centre_one(),
+                    centre: self.centre_one_text(),
                     body: self.first_title.clone(),
                 }),
                 Box::new(Text {
-                    // TODO: if any overlap is present, centre text in non-overlap-region
-                    centre: self.centre_two(),
+                    centre: self.centre_two_text(),
                     body: self.second_title.clone(),
                 }),
             ];
 
             if self.overlap > 0.0 {
-                texts.push(
-                    // TODO: centre overlap-text in overlap-region
-                    Box::new(Text {
-                        centre: self.centre_one().midway_to(&self.centre_two()),
-                        body: self.first_second_title.clone(),
-                    })
-                )
+                texts.push(Box::new(Text {
+                    centre: self.one_two_text(),
+                    body: self.first_second_title.clone(),
+                }))
             }
             if self.third_title != "" {
                 texts.push(Box::new(Text {
@@ -187,20 +230,17 @@ pub mod venn_genn {
                     body: self.central_title.clone(),
                 }));
                 texts.push(Box::new(Text {
-                    // TODO: if any overlap is present, centre text in non-overlap-region
-                    centre: self.centre_three(),
+                    centre: self.centre_three_text(),
                     body: self.third_title.clone(),
                 }));
 
                 if self.overlap > 0.0 {
-                    // TODO: centre overlap-text in overlap-region
                     texts.push(Box::new(Text {
-                        centre: self.centre_one().midway_to(&self.centre_three()),
+                        centre: self.one_three_text(),
                         body: self.first_third_title.clone(),
                     }));
-                    // TODO: centre overlap-text in overlap-region
                     texts.push(Box::new(Text {
-                        centre: self.centre_two().midway_to(&self.centre_three()),
+                        centre: self.two_three_text(),
                         body: self.second_third_title.clone(),
                     }));
                 }
