@@ -99,7 +99,7 @@ fn index() -> content::Html<&'static str> {
   <label>Circle radius: <input type="number" value="160" name="radius"/></label>
   <label>Image size: <input type="number" value="800" name="size"/></label>
   <label>Overlap size: <input type="number" value="40" name="overlap"/></label>
-
+  <input type="hidden" value="foo.gif" name="force_unroll"/>
   <label><input type="submit" value="Show me!"/></label>
   </form>
   "###);
